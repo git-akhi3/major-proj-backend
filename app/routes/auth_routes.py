@@ -1,5 +1,5 @@
 from urllib.parse import urlencode
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from fastapi import Depends
@@ -8,8 +8,18 @@ from app.config import GITHUB_CLIENT_ID, GITHUB_REDIRECT_URI, FRONTEND_URL
 from app.utils.oauth import exchange_code_for_token
 from app.services.github_service import get_authenticated_user
 from app.models.user import User
+from app.schemas.user_schema import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.get("/users/{user_id}", response_model=UserOut)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    """Return public profile info for a user (no access token exposed)."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 
 @router.get("/github")
