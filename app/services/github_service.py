@@ -1,9 +1,12 @@
 import httpx
 from typing import Optional
 from datetime import datetime, timezone
+import logging
 
+logger = logging.getLogger(__name__)
 
 GITHUB_API = "https://api.github.com"
+TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 
 
 def _headers(token: str) -> dict:
@@ -14,7 +17,7 @@ def _headers(token: str) -> dict:
 
 
 async def get_authenticated_user(token: str) -> dict:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         resp = await client.get(f"{GITHUB_API}/user", headers=_headers(token))
         resp.raise_for_status()
         return resp.json()
@@ -24,7 +27,7 @@ async def get_user_repos(token: str) -> list[dict]:
     """Fetch all repos for the authenticated user (including org repos)."""
     repos = []
     page = 1
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         while True:
             resp = await client.get(
                 f"{GITHUB_API}/user/repos",
@@ -44,7 +47,7 @@ async def get_commits(owner: str, repo: str, token: str) -> list[dict]:
     """Fetch commits for a repository."""
     commits = []
     page = 1
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         while True:
             resp = await client.get(
                 f"{GITHUB_API}/repos/{owner}/{repo}/commits",
@@ -62,7 +65,7 @@ async def get_commits(owner: str, repo: str, token: str) -> list[dict]:
 
 async def get_commit_detail(owner: str, repo: str, sha: str, token: str) -> dict:
     """Fetch single commit details (for additions/deletions)."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         resp = await client.get(
             f"{GITHUB_API}/repos/{owner}/{repo}/commits/{sha}",
             headers=_headers(token),
@@ -75,7 +78,7 @@ async def get_pull_requests(owner: str, repo: str, token: str) -> list[dict]:
     """Fetch all pull requests for a repository."""
     prs = []
     page = 1
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         while True:
             resp = await client.get(
                 f"{GITHUB_API}/repos/{owner}/{repo}/pulls",
@@ -93,7 +96,7 @@ async def get_pull_requests(owner: str, repo: str, token: str) -> list[dict]:
 
 async def get_pull_request_detail(owner: str, repo: str, pr_number: int, token: str) -> dict:
     """Fetch single PR details (for additions/deletions)."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         resp = await client.get(
             f"{GITHUB_API}/repos/{owner}/{repo}/pulls/{pr_number}",
             headers=_headers(token),
@@ -104,7 +107,7 @@ async def get_pull_request_detail(owner: str, repo: str, pr_number: int, token: 
 
 async def get_pr_reviews(owner: str, repo: str, pr_number: int, token: str) -> list[dict]:
     """Fetch reviews for a specific pull request."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
         resp = await client.get(
             f"{GITHUB_API}/repos/{owner}/{repo}/pulls/{pr_number}/reviews",
             headers=_headers(token),
